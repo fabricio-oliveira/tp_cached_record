@@ -1,0 +1,18 @@
+# This is the configuration used to check the rubocop source code.
+AllCops:
+  Exclude:
+    - 'spec/dummy/config/application.rb'
+  TargetRubyVersion: 2.3
+
+Metrics/LineLength:
+  Max: 120
+
+Style/Encoding:
+  Enabled: true
+
+Style/FrozenStringLiteralComment:
+  EnforcedStyle: always
+Style/ClassAndModuleChildren:
+  EnforcedStyle: compact
+Documentation:
+  Enabled: false

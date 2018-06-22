@@ -1,0 +1,3 @@
+lib/* linguist-vendored
+spec/* linguist-vendored
+*.rb linguist-language=Ruby

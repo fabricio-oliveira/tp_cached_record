@@ -1,0 +1,3 @@
+= TPCachedRecord
+
+This gem improve the ActiveRecord to try get data from cached before get from database
