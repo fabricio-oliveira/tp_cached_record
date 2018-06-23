@@ -18,7 +18,8 @@ Gem::Specification.new do |s|
   s.required_ruby_version = '>= 2.2.2'
 
   s.add_dependency 'rails', '~> 4'
-  s.add_dependency 'redis-objects', '~> 1.4.0'
+  s.add_dependency 'connection_pool', '~> 2.2.1'
+  s.add_development_dependency 'mock_redis', '0.18.0'
   s.add_development_dependency 'bundler', '~> 1.10'
   s.add_development_dependency 'rake', '~> 10.0'
   s.add_development_dependency 'rspec', '~> 3.0'

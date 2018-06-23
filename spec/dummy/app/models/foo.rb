@@ -11,5 +11,5 @@
 #
 
 class Foo < ActiveRecord::Base
-  acts_as_unique
+  acts_as_cached
 end

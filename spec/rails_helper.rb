@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+  # frozen_string_literal: true
 ENV['RAILS_ENV'] = 'test'
 
 require File.expand_path('../../spec/dummy/config/environment.rb', __FILE__)
@@ -8,6 +8,8 @@ require 'simplecov-rcov'
 require 'spec_helper'
 require 'rspec/rails'
 require 'factory_girl_rails'
+require 'mock_redis'
+require 'faker'
 
 if ENV['GENERATE_REPORTS'] == 'true'
   SimpleCov.formatters = SimpleCov::Formatter::RcovFormatter
@@ -17,12 +19,8 @@ end
 # Load support files
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 
-# Load fixtures from the engine
-# if ActiveSupport::TestCase.respond_to?(:fixture_path=)
-#   ActiveSupport::TestCase.fixture_path = File.expand_path('../fixtures', __FILE__)
-#   ActionDispatch::IntegrationTest.fixture_path = ActiveSupport::TestCase.fixture_path
-#   ActiveSupport::TestCase.fixtures :all
-# end
+# mock redis with redis_mock
+Redis = MockRedis
 
 RSpec.configure do |config|
   config.include FactoryGirl::Syntax::Methods

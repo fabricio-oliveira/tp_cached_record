@@ -1,66 +1,52 @@
 # frozen_string_literal: true
 require 'active_record' unless defined? ActiveRecord
 
-module SQLErrorParse
-  def unique_errors(error)
-    table = self.class.table_name
-    split_key = /(INSERT|UPDATE)/
-    especific_key = %w(UNIQUE constraint failed: SQLite3::ConstraintException:)
-    error.split(split_key)[0].split
-         .reject { |e| especific_key.include? e }
-         .map { |e| e.sub("#{table}.", '').delete(':') }
-         .map(&:to_sym)
+module InitializeMethod
+  def self.init(args = {})
+    args[:port] ||= 6379
+    @@expire = args[:expire] ||= 60 * 60 * 24 # sec * min * hour
+    raise StandardError('url is empty') if args[:url].nil?
+    @@redis_pool = ConnectionPool.new(size: 5, timeout: 5) do
+      Redis.new(host: host, port: args[:port])
+    end
+  end
+end
+
+module CachedQuery
+  module FindBy
+    PREFIX_CONST = 'FIND_BY'
+
+    class << self
+      def find_by(*args)
+        super(*args)
+      end
+
+      alias really_find_by find_by
+
+      def cached_find_by(*args)
+        hash =  Digest::MD5.hexdigest(args)
+        value = @@redis_pool.get("#{PREFIX_CONST}|#{hash}")
+        return new(value.to_h) if value
+
+        value = really_find_by(*args)
+        @@redis_pool.set("#{PREFIX_CONST}|#{hash}", value, @@expire)
+        value
+      end
+    end
+
   end
 end
 
 module TPCachedRecord
-  extend ActiveSupport::Concern
-  include SQLErrorParse
-
-  def find_by(*args)
-    super(*args)
-  end
-
-  alias old_find_by find_by
-
-  def cached_find_by(*args)
-    old_save(*args)
-  rescue ActiveRecord::RecordNotUnique => e
-    unique_errors(e.to_s).each do |field|
-      errors.add(field, :Unique, message: "UNIQUE constraint failed #{field}")
-    end
-    return false
-  end
-
-  def find_by!(*args)
-    super(*args)
-  end
-
-  alias old_find_by! find_by!
-
-  def cached_find_by!(*args)
-    old_find_by!(*args)
-  rescue ActiveRecord::RecordNotUnique => e
-    errors.add('all', e.to_s)
-    raise ActiveRecord::RecordInvalid, self
-  end
+  include InitializeMethod
+  include CachedQuery::FindBy
 end
 
 ActiveSupport.on_load(:active_record) do
   class ActiveRecord::Base
-    def self.acts_as_unique
+    def self.acts_as_cached
       include TPCachedRecord
-      alias_method :save, :save_optimistic
-      alias_method :save!, :save_optimistic!
+      singleton_class.send(:alias_method,:find_by,:cached_find_by)
     end
   end
 end
-
-# class UniqueOptimistic < ActiveModel::Validator
-#   def validate(record)
-#     record.class_eval do
-#       include TPCachedRecord
-#       record.send(:optimistic_unique)
-#     end
-#   end
-# end
