@@ -11,7 +11,7 @@ module CachedQuery
       super(*args)
     end
 
-    alias really_find_by find_by
+    alias real_find_by find_by
 
     def cached_find_by(*args)
       raise StandardError('unitialized redis') unless defined? @@redis_pool
@@ -20,7 +20,7 @@ module CachedQuery
       value = @@redis_pool.get("#{PREFIX_CONST}|#{hash}")
       return new(value.to_h) if value
 
-      value = really_find_by(*args)
+      value = real_find_by(*args)
       @@redis_pool.set("#{PREFIX_CONST}|#{hash}", value, @@expire)
       value
     end
